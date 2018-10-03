@@ -21,7 +21,8 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       texlive-lang-japanese texlive-fonts-recommended texlive-latex-extra lmodern fonts-lmodern tex-gyre fonts-texgyre texlive-pictures \
       ghostscript gsfonts zip ruby-zip ruby-nokogiri mecab ruby-mecab mecab-ipadic-utf8 poppler-data cm-super \
-      graphviz gnuplot python-blockdiag python-aafigure && \
+      graphviz gnuplot python-blockdiag python-aafigure ruby-dev make gcc \
+      libc6-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 ## if you want to use ipa font instead of noto font, use this settings
@@ -31,6 +32,9 @@ RUN apt-get update && \
 RUN gem install bundler rake --no-rdoc --no-ri && \
     gem install review -v "$REVIEW_VERSION" --no-rdoc --no-ri && \
     gem install review-peg -v "$REVIEW_PEG_VERSION" --no-rdoc --no-ri
+
+# install md2review
+RUN gem install md2review
 
 # install node.js environment
 RUN apt-get update && \
