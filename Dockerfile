@@ -49,7 +49,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     npm install -g yarn && \
-    npm install --unsafe-perm -g textlint textlint-plugin-review textlint-rule-prh textlint-rule-preset-jtf-style
+    npm install --unsafe-perm -g textlint textlint-plugin-review textlint-rule-prh textlint-rule-preset-jtf-style textlint-rule-no-dead-link
 
 # install noto font from backports
 RUN echo "deb http://ftp.jp.debian.org/debian/ stretch-backports main" >> /etc/apt/sources.list
