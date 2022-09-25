@@ -1,0 +1,89 @@
+name: Docker
+
+on:
+  push:
+    branches:
+      - master
+  # Run tests for each PRs.
+  pull_request: {}
+
+env:
+  GHCR_IMAGE_ID: ghcr.io/${{ github.repository_owner }}/review
+  HUB_IMAGE_ID: ${{ github.repository_owner }}/review
+  REGISTRY_USER_ID: vvakame
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run test
+        run: ./test.sh
+
+  push:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    strategy:
+      matrix:
+        version:
+          - "3.2"
+          - "4.2"
+          - "5.0"
+          - "5.1"
+          - "5.2"
+          - "5.3"
+          - "5.4"
+          - "5.5"
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build image
+        run: |
+          cd "review-${{ matrix.version }}"
+          docker build . --tag review
+
+      - name: Log into GitHub Container Registry
+        run: echo "${{ secrets.DOCKER_CR_PAT }}" | docker login https://ghcr.io -u "${REGISTRY_USER_ID}" --password-stdin
+
+      - name: Push tagged image to GitHub Container Registry
+        run: |
+          docker tag review $GHCR_IMAGE_ID:${{ matrix.version }}
+          docker push $GHCR_IMAGE_ID:${{ matrix.version }}
+
+      - name: Log into Docker Hub
+        run: echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "${REGISTRY_USER_ID}" --password-stdin
+
+      - name: Push tagged image to Docker Hub
+        run: |
+          docker tag review $HUB_IMAGE_ID:${{ matrix.version }}
+          docker push $HUB_IMAGE_ID:${{ matrix.version }}
+
+
+  # 最後にpushされたものにlatestが更新されるので他のタグ付きと分ける ついでにビルドもし直していいでしょ…
+  push_latest:
+    needs: push
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build image
+        run: |
+          docker build . --tag review
+
+      - name: Log into GitHub Container Registry
+        run: echo "${{ secrets.DOCKER_CR_PAT }}" | docker login https://ghcr.io -u "${REGISTRY_USER_ID}" --password-stdin
+
+      - name: Push latest image to GitHub Container Registry
+        run: |
+          docker tag review $GHCR_IMAGE_ID:latest
+          docker push $GHCR_IMAGE_ID:latest
+
+      - name: Log into Docker Hub
+        run: echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "${REGISTRY_USER_ID}" --password-stdin
+
+      - name: Push latest image to Docker Hub
+        run: |
+          docker tag review $HUB_IMAGE_ID:latest
+          docker push $HUB_IMAGE_ID:latest

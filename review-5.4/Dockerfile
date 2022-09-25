@@ -1,16 +1,15 @@
-FROM debian:buster-slim
+FROM debian:bullseye-slim
 LABEL maintainer="vvakame@gmail.com"
 
-ENV REVIEW_VERSION 4.2.0
+ENV REVIEW_VERSION 5.4.0
 ENV REVIEW_PEG_VERSION 0.2.2
-ENV NODEJS_VERSION 14
+ENV NODEJS_VERSION 16
 
-ENV HARANOAJI_VERSION 20210130
-
-ENV PANDOC_VERSION 2.12
-ENV PANDOC_DEB_VERSION 2.12-1
+ENV PANDOC_VERSION 2.17.1.1
+ENV PANDOC_DEB_VERSION 2.17.1.1-1
 
 ENV LANG en_US.UTF-8
+ENV DEBIAN_FRONTEND noninteractive
 
 # setup
 RUN apt-get update && \
@@ -21,6 +20,9 @@ RUN apt-get update && \
 RUN echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
 RUN locale-gen en_US.UTF-8 && update-locale en_US.UTF-8
 
+# for Debian Bug#955619
+RUN mkdir -p /usr/share/man/man1
+
 # install Re:VIEW environment
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -29,7 +31,7 @@ RUN apt-get update && \
       ghostscript gsfonts \
       zip ruby-zip \
       ruby-nokogiri mecab ruby-mecab mecab-ipadic-utf8 poppler-data \
-      graphviz gnuplot python-blockdiag python-aafigure \
+      graphviz gnuplot python3-blockdiag plantuml \
       ruby-dev build-essential \
       mecab-jumandic- mecab-jumandic-utf8- \
       texlive-extra-utils poppler-utils && \
@@ -39,10 +41,11 @@ RUN apt-get update && \
 # RUN kanji-config-updmap ipaex
 
 # setup Re:VIEW
-RUN gem install bundler rake --no-rdoc --no-ri && \
-    gem install review -v "$REVIEW_VERSION" --no-rdoc --no-ri && \
-    gem install pandoc2review --no-rdoc --no-ri
-#   gem install review-peg -v "$REVIEW_PEG_VERSION" --no-rdoc --no-ri
+RUN gem install bundler rake -N && \
+    gem install review -v "$REVIEW_VERSION" -N && \
+    gem install pandoc2review -N && \
+    gem install rubyzip -N
+#   gem install review-peg -v "$REVIEW_PEG_VERSION" -N
 
 # install node.js environment
 RUN apt-get update && \
@@ -59,32 +62,17 @@ RUN apt-get update && \
     npm install -g yarn
 
 # install noto font
-RUN apt-get update && apt-get -y install fonts-noto-cjk-extra && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-## install font map of noto for dvipdfmx
-COPY noto-otc/ /usr/share/texlive/texmf-dist/fonts/map/dvipdfmx/ptex-fontmaps/noto-otc/
+# RUN apt-get update && apt-get -y install fonts-noto-cjk-extra && \
+#     apt-get clean && \
+#     rm -rf /var/lib/apt/lists/*
 
 ## if you want to use noto font instead of haranoaji font, use this settings
 # RUN kanji-config-updmap-sys noto-otc
 
-# install haranoaji font
-RUN mkdir -p /usr/local/share/texmf/fonts/opentype && \
-    curl -L -s -o /usr/local/share/texmf/fonts/opentype/haranoaji.zip \
-      https://github.com/trueroad/HaranoAjiFonts/archive/${HARANOAJI_VERSION}.zip && \
-    cd /usr/local/share/texmf/fonts/opentype && \
-    unzip -q haranoaji.zip && \
-    rm haranoaji.zip
-
-## install font map of haranoaji for dvipdfmx
-COPY haranoaji/ /usr/share/texlive/texmf-dist/fonts/map/dvipdfmx/ptex-fontmaps/haranoaji/
-
-## use haranoaji for uplatex
-RUN texhash && kanji-config-updmap-sys haranoaji
+RUN kanji-config-updmap-sys haranoaji
 
 ## install pandoc
-RUN curl -sL -o /tmp/pandoc.deb https://github.com/jgm/pandoc/releases/download/${PANDOC_VERSION}/pandoc-${PANDOC_DEB_VERSION}-amd64.deb && \
+RUN curl -sL -o /tmp/pandoc.deb https://github.com/jgm/pandoc/releases/download/${PANDOC_VERSION}/pandoc-${PANDOC_DEB_VERSION}-$(dpkg --print-architecture).deb && \
     dpkg -i /tmp/pandoc.deb && \
     rm /tmp/pandoc.deb
 
