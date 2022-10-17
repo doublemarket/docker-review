@@ -63,7 +63,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     npm install -g yarn && \
-    npm install --unsafe-perm -g textlint textlint-plugin-review textlint-rule-prh textlint-rule-preset-jtf-style textlint-rule-no-dead-link
+    npm install --unsafe-perm -g textlint textlint-plugin-review textlint-rule-prh textlint-rule-preset-jtf-style textlint-rule-no-dead-link textlint-filter-rule-comments
 
 # install noto font
 # RUN apt-get update && apt-get -y install fonts-noto-cjk-extra && \
