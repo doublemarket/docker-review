@@ -48,9 +48,6 @@ RUN gem install bundler rake -N && \
     gem install pandoc2review -N && \
     gem install rubyzip -N
 
-# install md2review
-RUN gem install md2review
-
 # install node.js environment
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -63,8 +60,7 @@ RUN apt-get update && \
       nodejs && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
-    npm install -g yarn && \
-    npm install --unsafe-perm -g textlint textlint-plugin-review textlint-rule-prh textlint-rule-preset-jtf-style textlint-rule-no-dead-link textlint-filter-rule-comments
+    npm install -g yarn
 
 RUN kanji-config-updmap-sys haranoaji
 
